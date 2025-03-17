@@ -242,36 +242,53 @@ document.addEventListener('DOMContentLoaded', () => {
     const childQuantity = parseInt(document.getElementById('childQuantity').value);
 
     if(generalQuantity === 0 && seniorQuantity === 0 && childQuantity === 0){
-      alert("zero tickets");
+      alert("Please Select Ticket(s)");
       return;
     }
     const eventPopup = document.getElementById("eventPopup");
     const paymentBtn = document.getElementById("paymentBtn");
     paymentBtn.classList.add('hidden');
+
       if (eventPopup) {
           eventPopup.insertAdjacentHTML("beforeend", `
             <div class="payment-container">
-              <h2>Card</h2>
+
+              <h2>Payment</h2>
+
+              <h3>Billing Information</h3>
+              <div class="input-group">
+              <div class="flex-container">
+                <div class="input-group">
+                  <label>First Name</label>
+                  <input type="text" placeholder="John" required>
+                </div>
+                <div class="input-group">
+                  <label>Last Name</label>
+                  <input type="text" placeholder="Doe" required>
+                </div>
+              </div>
+              <div class="input-group">
+                <label>Email</label>
+                <input type="text" placeholder="johndoe@gmail.com" required>
+              </div>
+              
+              <h3>Pay with</h3>
               <div class="card-icons">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.svg" alt="MasterCard">
               </div>
               <div class="input-group">
-                <label>Name on card</label>
-                <input type="text" placeholder="John Doe">
-              </div>
-              <div class="input-group">
                 <label>Card number</label>
-                <input type="text" placeholder="1234 5678 9012 3456">
+                <input type="text" placeholder="1234 5678 9012 3456" required>
               </div>
               <div class="flex-container">
                 <div class="input-group">
                   <label>Expiry date</label>
-                  <input type="text" placeholder="MM/YY">
+                  <input type="text" placeholder="MM/YY" required>
                 </div>
                 <div class="input-group">
                   <label>Security code (CVV)</label>
-                  <input type="text" placeholder="123">
+                  <input type="text" placeholder="123" required>
                 </div>
               </div>
               <button class="pay-btn" onclick="submitPayment()">Pay</button>
