@@ -1,0 +1,4 @@
+exclude:
+- Festify/google-cloud-sdk/
+- vendor/
+- .github/ 

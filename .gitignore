@@ -1,1 +1,4 @@
 node_modules/
+Festify/.env
+# Festify/config.js
+Festify/google-cloud-sdk

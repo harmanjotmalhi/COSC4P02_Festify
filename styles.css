@@ -1,0 +1,785 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    background-color: rgb(249, 250, 251);
+    color: rgb(17, 24, 39);
+}
+
+/* Container */
+.container {
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Container */
+.container2 {
+    max-width: 80em;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Hero Section */
+.hero {
+    background-color: rgb(20, 35, 71);
+    color: white;
+    padding: 4rem 1rem;
+}
+
+.hero-container {
+    max-width: 80rem;
+    margin: 0 auto;
+}
+
+.hero h1 {
+    font-size: 2.25rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.hero p {
+    font-size: 1.25rem;
+    color: rgb(209, 213, 219);
+    margin-bottom: 2rem;
+}
+
+.search-container {
+    display: flex;
+    gap: 1rem;
+    max-width: 32rem;
+}
+
+.search-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    font-size: 1rem;
+}
+
+/* Events Section */
+.events-section {
+    padding: 3rem 1rem;
+}
+
+.events-section h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+}
+
+.events-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+/* Event Card */
+.event-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s;
+}
+
+.event-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.event-image-container {
+    position: relative;
+    height: 12rem;
+    z-index: 1;
+}
+
+.event-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.event-price {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background-color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.event-details {
+    padding: 1rem;
+}
+
+.event-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.event-info {
+    display: flex;
+    align-items: center;
+    color: rgb(75, 85, 99);
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.event-info svg {
+    margin-right: 0.5rem;
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+    .events-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .events-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Event Details Popup */
+#eventPopup {
+    padding: 20px;
+    background: white;
+}
+
+.event-popup-content {
+    padding: 20px;
+    position: relative;
+}
+
+#eventDescription {
+    margin: 20px 0;
+    line-height: 1.6;
+    color: #666;
+}
+
+#eventTitle {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+
+.event-images {
+    display: flex;
+    transition: transform 0.3s ease;
+    height: 100%;
+}
+
+.event-images img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+/* New styles for event images */
+.event-images img {
+    border: 2px solid #007BFF; /* Add a blue border */
+    border-radius: 8px; /* Maintain existing border radius */
+    transition: transform 0.3s ease; /* Smooth transition */
+}
+
+.event-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.ticket-section {
+    margin-top: 30px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+}
+
+.ticket-types {
+    display: grid;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.ticket-type {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.ticket-type:hover {
+    background: #f0f0f0;
+}
+
+.ticket-type label {
+    font-weight: 600;
+    color: #333;
+}
+
+.ticket-price {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: white;
+    margin-top: 0.75rem;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.ticket-price::before {
+    content: 'Total Cost: ';
+    font-weight: normal;
+    opacity: 0.8;
+}
+
+.original-price {
+    text-decoration: line-through;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+}
+
+.discounted-price {
+    color: #4facfe;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.discount-badge {
+    background: rgba(79, 172, 254, 0.2);
+    color: #4facfe;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantity-selector button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #007bff;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-selector button:hover {
+    background: #0056b3;
+}
+
+.quantity-selector button:active {
+    transform: scale(0.95);
+}
+
+.quantity-selector input {
+    width: 40px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+.proceed-payment-btn {
+    width: 100%;
+    padding: 15px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    margin-top: 30px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.proceed-payment-btn:hover {
+    background: #0056b3;
+}
+
+/* Popup Styles */
+.hidden {
+    display: none;
+}
+
+/* Common popup styles */
+#popup, #eventPopup {
+    position: fixed;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+}
+
+/* Login popup specific styles */
+#popup {
+    top: 40%;
+    width: 450px;
+    padding: 50px;
+    border-radius: 1rem;
+}
+
+/* Event popup specific styles */
+#eventPopup {
+    top: 50%;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    border-radius: 12px;
+    overflow-y: auto;
+    z-index: 2000;
+}
+
+/* Close button styles */
+.close-btn {
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333;
+    z-index: 2001;
+}
+
+#popup .close-btn {
+    top: 2px;
+    font-size: 18px;
+}
+
+#eventPopup .close-btn {
+    top: 10px;
+    font-size: 24px;
+}
+
+.close-btn:hover {
+    color: red;
+}
+
+/* Content blur effect */
+#content {
+    transition: filter 0.3s ease;
+    min-height: 100vh;
+}
+
+#content.active {
+    filter: blur(5px);
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Prevent body scroll when popup is open */
+body.popup-open {
+    overflow: hidden;
+}
+
+h2 {
+    margin-bottom: 7px;
+    text-align: center;
+}
+
+p {
+    font-size: 12px;
+    color: #555;
+    text-align: center;
+    margin-bottom: 7px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-size: 13px;
+}
+
+.btn {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: none;
+    background-color: #007BFF;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer !important;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+
+/* Slider container with fixed dimensions */
+.slider {
+    position: relative;
+    width: 600px; /* Increased width */
+    height: 400px; /* Increased height */
+    overflow: hidden;
+    margin: 0 auto;
+  }
+  
+  /* Container for slides */
+  .slides {
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Each slide image */
+  .slide {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+  }
+  
+  /* Navigation buttons */
+  .slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    z-index: 10;
+  }
+  
+  .slider-btn.prev {
+    left: 10px;
+  }
+  
+  .slider-btn.next {
+    right: 10px;
+  }
+  
+  payment-container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    width: 350px;
+}
+.payment-container h2 {
+    margin-bottom: 10px;
+}
+.input-group {
+    margin-bottom: 15px;
+    justify-content: space-between;
+    width: 100%;
+}
+.input-group label {
+    display: block;
+    font-size: 14px;
+
+    margin-bottom: 5px;
+}
+.input-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+.flex-container {
+    display: flex;
+    gap: 10px;
+}
+.flex-container input {
+    flex: 1;
+}
+.pay-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+.pay-btn:hover {
+    background-color: #0056b3;
+}
+.card-icons {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+.card-icons img {
+    height: 25px;
+}
+  
+h3 {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+h4 {
+    margin-top: 10px;
+    margin-left: 5px;
+    color: #2c76c5
+}
+/* Add a highly specific rule to maintain ticket price color */
+.event-popup-content .ticket-type .ticket-price,
+.event-popup-content #generalPrice,
+.event-popup-content #seniorPrice, 
+.event-popup-content #childPrice {
+    color: #0066ff !important;
+}
+
+/* Boosted Event Styles */
+.event-card.boosted {
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  animation: pulse 2s infinite;
+  position: relative;
+}
+
+.boost-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background: linear-gradient(135deg, #ffd700, #ffa500);
+  color: #000;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  z-index: 10;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+}
+
+/* Promo Code Slider */
+.promo-slider {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.promo-header {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.promo-header h3 {
+    color: white;
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.promo-header p {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.875rem;
+}
+
+.promo-slides {
+    display: flex;
+    overflow: hidden;
+    margin: 0.5rem 0;
+    width: 200%;  /* Make room for both slides */
+}
+
+.promo-slide {
+    flex: 0 0 50%;  /* Each slide takes up half of the container */
+    padding: 0.5rem;
+}
+
+.promo-content {
+    background: rgba(255,255,255,0.1);
+    padding: 0.75rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.promo-code {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: white;
+    background: rgba(255,255,255,0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+.promo-desc {
+    color: white;
+    font-size: 0.875rem;
+    margin: 0.25rem 0;
+}
+
+.promo-valid {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.75rem;
+}
+
+.promo-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dot:hover {
+    transform: scale(1.2);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.dot.active {
+    background: #ffffff;
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes slide {
+    0%, 45% { transform: translateX(0); }
+    50%, 95% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+}
+
+.promo-slides {
+    animation: slide 10s infinite;
+}
+
+/* Promo Code Styles */
+.promo-code-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.promo-code-group input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.apply-promo-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.apply-promo-btn:hover {
+    background-color: #0056b3;
+}
+
+.promo-message {
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.promo-success {
+    color: #28a745;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.promo-error {
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.promo-success i,
+.promo-error i {
+    font-size: 16px;
+}
+
+/* Password Toggle Button for login page*/
+.password-toggle-btn i {
+    font-size: 20px;
+    color: black; /* Ensure the icon is black */
+    display: inline-block;
+}
+
+.password-toggle-btn {
+    padding: 10px;
+    margin-left: 10px;
+}

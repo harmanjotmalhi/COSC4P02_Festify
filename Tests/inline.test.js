@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 
-// Add the dummy implementation for the unimplemented API.(was throwing an error as jsdom (which Jest uses for a DOM-like environment) does not implement all browser APIs, such as requestSubmit or navigation features like updating window.location.href)
-HTMLFormElement.prototype.requestSubmit = function() {};
+// Import the functions we want to test from our new module
+import { toggle, closePopup, handleSignIn, handleSignUp } from '../inline.js';
 
 describe('Inline JS functions from index.html', () => {
   beforeEach(() => {
@@ -17,20 +17,10 @@ describe('Inline JS functions from index.html', () => {
         <button id="signUpBtn">Sign Up</button>
       </form>
     `;
-    // Define the inline functions (as in HTML file)
-    window.toggle = function () {
-      const content = document.getElementById('content');
-      const popup = document.getElementById('popup');
-      content.classList.toggle('active');
-      popup.classList.toggle('hidden');
-    };
-
-    window.closePopup = function () {
-      const content = document.getElementById('content');
-      const popup = document.getElementById('popup');
-      content.classList.remove('active');
-      popup.classList.add('hidden');
-    };
+    
+    // Attach functions to window for compatibility if needed
+    window.toggle = toggle;
+    window.closePopup = closePopup;
   });
 
   test('toggle() should remove "active" and "hidden" classes when toggled', () => {
@@ -42,12 +32,12 @@ describe('Inline JS functions from index.html', () => {
     expect(popup.classList.contains('hidden')).toBe(true);
 
     // After toggle, classes should be removed
-    window.toggle();
+    toggle();
     expect(content.classList.contains('active')).toBe(false);
     expect(popup.classList.contains('hidden')).toBe(false);
 
     // Toggling again re-adds the classes
-    window.toggle();
+    toggle();
     expect(content.classList.contains('active')).toBe(true);
     expect(popup.classList.contains('hidden')).toBe(true);
   });
@@ -59,7 +49,7 @@ describe('Inline JS functions from index.html', () => {
     content.classList.add('active');
     popup.classList.remove('hidden');
 
-    window.closePopup();
+    closePopup();
     expect(content.classList.contains('active')).toBe(false);
     expect(popup.classList.contains('hidden')).toBe(true);
   });
@@ -70,25 +60,12 @@ describe('Inline JS functions from index.html', () => {
     const signInUser = jest.fn().mockResolvedValue();
     const signUpUser = jest.fn().mockResolvedValue();
 
-    // Attach event listeners similar to inline script
+    // Attach event listeners using our imported handlers
     const signInBtn = document.getElementById('signInBtn');
     const signUpBtn = document.getElementById('signUpBtn');
 
-    signInBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-      await signInUser(email, password);
-      window.location.href = 'profile.html';
-    });
-
-    signUpBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-      await signUpUser(email, password);
-      window.location.href = 'profile.html';
-    });
+    signInBtn.addEventListener('click', (e) => handleSignIn(e, signInUser));
+    signUpBtn.addEventListener('click', (e) => handleSignUp(e, signUpUser));
 
     // Simulate clicking the sign in button
     const signInEvent = new MouseEvent('click', { bubbles: true });

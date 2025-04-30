@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <title>Event Publishing Platform</title>
+
+  <!-- Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Exo:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Your main stylesheet (if you have one) -->
+  <link rel="stylesheet" href="list-your-event.css">
+
+  <!-- Load your organizer.js to handle sign in/up -->
+  <script type="module" src="organizer.js"></script>
+
+  <!-- API Keys Initialization -->
+  <script type="module">
+    import { fetchApiKeys } from './firebase.js';
+    
+    // Initialize API keys by fetching them from Firebase
+    async function initApiKeys() {
+      try {
+        // Fetch API keys from Firebase
+        const apiKeys = await fetchApiKeys();
+        console.log("API keys initialized successfully");
+        
+        // Initialize EmailJS with the fetched public key
+        emailjs.init({
+          publicKey: apiKeys.EMAIL_PUBLIC_KEY,
+        });
+      } catch (error) {
+        console.error("Error initializing API keys:", error);
+      }
+    }
+    
+    // Call the initialization function
+    document.addEventListener('DOMContentLoaded', initApiKeys);
+  </script>
+
+  <!-- Inline CSS for gradient hero, features, etc. -->
+  <style>
+    @keyframes gradient-animation {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Navbar */
+    .navbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 30px;
+    }
+    .navbar .logo img {
+      width: 100px;
+      height: auto;
+    }
+    .navbar .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+    .navbar .nav-links a {
+      color: #d3dce6;
+      text-decoration: none;
+      font-size: 1em;
+    }
+
+    /* Hero Section */
+    .hero-section {
+      background: url('./images/1.avif') no-repeat center center/cover;
+      display: flex;
+      align-items: center;
+      text-align: left;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+    }
+    .hero-content {
+      max-width: 600px;
+      margin-left: 20px;
+    }
+    .hero-content h1 {
+      font-size: 3em;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .hero-content h1 span {
+      color: #00AEEF;
+    }
+    .hero-content p {
+      margin: 20px 0;
+      font-size: 1.1em;
+      line-height: 1.6;
+      color: #d3dce6;
+    }
+    .cta-button {
+      background-color: #ff007f;
+      color: #fff;
+      padding: 15px 25px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-block;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    .cta-button:hover {
+      background-color: #e60073;
+    }
+
+    /* Features Section */
+    .features-section {
+      background-color: #f8f9fa;
+      color: #1A2E40;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .features-section h2 {
+      font-size: 2.5em;
+      margin-bottom: 40px;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* 3 columns */
+      place-items: center;
+      gap: 20px; /* Adjust spacing */
+      text-align: center;
+    }
+    .feature-item {
+      max-width: 300px;
+      background-color: #fff; 
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .feature-title {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .feature-desc {
+      font-family: 'Exo', sans-serif;
+      font-size: 1em;
+      color: #333;
+    }
+
+    /* Clients Section */
+    .clients-section {
+      background-color: #f8f9fa;
+      padding: 50px 20px;
+      text-align: center;
+    }
+    .clients-section h2 {
+      font-size: 32px;
+      margin-bottom: 5px;
+      color: #121212;
+    }
+    .clients-desc {
+      font-family: 'Exo', sans-serif;
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 40px;
+    }
+    .clients {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .client-logo {
+      max-width: 120px;
+      height: auto;
+      filter: grayscale(100%);
+    }
+
+    /* Suitability Section */
+    .target-section {
+      padding: 50px 20px;
+      text-align: center;
+    }
+    .target-section h3 {
+      font-size: 36px;
+      font-weight: 700;
+      color: #121212;
+    }
+    .description {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      color: #666;
+      max-width: 800px;
+      margin: 0 auto 40px;
+    }
+    .cards-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      width: 250px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      text-align: center;
+    }
+    .card img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .card-text {
+      padding: 15px;
+      font-weight: 700;
+      color: #121212;
+    }
+
+    /* Popup styling */
+    #popup.hidden {
+      display: none;
+    }
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      color: #000;
+      padding: 2rem;
+      border-radius: 8px;
+      z-index: 1000;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      float: right;
+      cursor: pointer;
+    }
+    .input-field {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+    }
+    .btn {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border: none;
+      background: #007BFF;
+      color: #fff;
+      border-radius: 4px;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+
+    /* Dim background when popup is active */
+    #content.active {
+      filter: blur(3px);
+      pointer-events: none;
+      user-select: none;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+
+    #generatePosterBtn {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.25rem; /* Increased padding for a more substantial feel */
+      border-radius: 0.75rem; /* Softer corners */
+      font-weight: 600; /* Slightly bolder text */
+      font-size: 0.9rem; /* Adjusted font size for better readability */
+      cursor: pointer;
+      transition: all 0.3s ease; /* Smooth transition for hover effects */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); /* Enhanced shadow for depth */
+      margin: 1rem auto; /* Centered with margin for spacing */
+      width: 80%; /* Wider button for better visibility */
+      max-width: 400px; /* Increased max-width for a more balanced look */
+      margin-bottom: 1.5rem; /* Added space below the button */
+    }
+
+    #generatePosterBtn:hover {
+      transform: translateY(-2px); /* Slight lift on hover */
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4); /* Deeper shadow on hover */
+    }
+
+    #generatePosterBtn i {
+      font-size: 1rem; /* Adjusted icon size for better proportion */
+    }
+  </style>
+
+<!-- Authentication Logic -->
+<script type="module">
+  import { signInUser, signUpUser, onUserStateChanged, getUserProfile, resetPassword } from './firebase.js';
+
+  // Listen for authentication state changes
+  onUserStateChanged((user) => {
+    if (user) {
+      console.log('User is logged in:', user.email);
+    } else {
+      console.log('No user is logged in.');
+    }
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const authForm = document.getElementById('authForm');
+    const signInBtn = document.getElementById('signInBtn');
+    const signUpBtn = document.getElementById('signUpBtn');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+
+    // Setup forgot password link
+    if (forgotPasswordLink) {
+      forgotPasswordLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.showForgotPasswordPopup();
+      });
+    }
+    
+    // Setup reset password button
+    if (resetPasswordBtn) {
+      resetPasswordBtn.addEventListener('click', async () => {
+        const email = document.getElementById('resetEmail').value;
+        if (!email) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Email Required',
+            text: 'Please enter your email address.'
+          });
+          return;
+        }
+        
+        try {
+          const result = await resetPassword(email);
+          if (result.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Reset Link Sent',
+              text: 'Please check your email for password reset instructions.'
+            });
+            window.closeForgotPasswordPopup();
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: result.message
+            });
+          }
+        } catch (error) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to send reset link. Please try again.'
+          });
+        }
+      });
+    }
+
+    if (authForm && signInBtn && signUpBtn) {
+      // Handle Sign In
+      signInBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        try {
+          // Sign in the user
+          const userCredential = await signInUser(email, password);
+          
+          // Get user profile to check subscription status
+          const userProfile = await getUserProfile(userCredential.user.uid);
+          
+          // Show success message
+          await Swal.fire({
+            icon: 'success',
+            title: 'Login Successful!',
+            text: 'Welcome back to Festify!',
+            timer: 1500
+          });
+          
+          // Redirect based on subscription status
+          if (userProfile && userProfile.subscriptionStatus === 'PRO') {
+            console.log('PRO user detected, redirecting to organization dashboard');
+            window.location.href = 'organization-dashboard.html';
+          } else {
+            console.log('Basic user detected, redirecting to basic dashboard');
+            window.location.href = 'basic-org-dash.html';
+          }
+        } catch (error) {
+          console.error('Sign In Error:', error);
+          showIncorrectCredentials('Sign In Error: ' + error.message);
+        }
+      });
+
+      // Handle Sign Up
+      signUpBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        try {
+          await signUpUser(email, password);
+          window.location.href = 'basic-org-dash.html';
+        } catch (error) {
+          console.error('Sign Up Error:', error);
+          showAccountExists('Sign Up Error: ' + error.message);
+        }
+      });
+    }
+  });
+</script>
+
+</head>
+<body>
+  <div id="content">
+    <!-- Navbar -->
+    <div class="navbar">
+      <div class="logo">
+        <img src="./images/festifyLogo.png" alt="Logo">
+      </div>
+      <div class="nav-links" >
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#clients" class="nav-link">Clients</a>
+        <a href="index.html" class="nav-link">Events</a>
+      </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>Publish your event in <span>five</span> minutes.</h1>
+            <p>Craft unique experiences using our simple and powerful event platform. Create, ticket and host both on-ground and digital events on a platform used by millions of live event-loving fans.</p>
+            <a href="#" class="cta-button" onclick="toggle()">LIST YOUR EVENT</a>
+        </div>
+    </div>
+
+
+    <!-- Features Section -->
+  <section id="features">
+    <div class="features-section">
+        <h2>Features</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <img src="./images/list-your-event-landing-page/flexibility.svg" class="feature-icon" alt="Flexibility">
+                <p class="feature-title">Flexibility</p>
+                <p class="feature-desc">List and manage on-ground and digital experiences through a single dashboard.</p>
+            </div>
+
+        <div class="feature-item">
+          <img src="./images/list-your-event-landing-page/customer-data.png" class="feature-icon" alt="Customer Data">
+          <p class="feature-title">Customer Data</p>
+          <p class="feature-desc">
+            Take an export with all attendee data. Collect additional details using customizable forms.
+          </p>
+        </div>
+
+        <div class="feature-item">
+          <img src="./images/list-your-event-landing-page/communication.svg" class="feature-icon" alt="Communication">
+          <p class="feature-title">Communication</p>
+          <p class="feature-desc">
+            Talk to your ticket buyers, send them instructions or collect feedback via WhatsApp/Email.
+          </p>
+        </div>
+
+        <div class="feature-item">
+          <img src="./images/list-your-event-landing-page/safety-measures.svg" class="feature-icon" alt="Safety Measures">
+          <p class="feature-title">Safety Measures</p>
+          <p class="feature-desc">
+            Specify safety measures you will have at your event keeping your customers at ease.
+          </p>
+        </div>
+
+        <div class="feature-item">
+          <img src="./images/list-your-event-landing-page/interactions-media.svg" class="feature-icon" alt="Interactions & Media">
+          <p class="feature-title">Interactions & Media</p>
+          <p class="feature-desc">
+            Engage your attendees via video, chat, and Q&A. Use music, images, and more for event packaging.
+          </p>
+        </div>
+
+        <div class="feature-item">
+          <img src="./images/list-your-event-landing-page/automated-payouts.png" class="feature-icon" alt="Automated Payouts">
+          <p class="feature-title">Automated Payouts</p>
+          <p class="feature-desc">
+            Onboard your brand and collect payouts within 7 days after an event.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <!-- Suitable For Everyone Section -->
+    <div class="target-section">
+      <h3>Suitable For Everyone</h3>
+      <p class="description">
+        Festify supports a wide range of event listings; from independent artists who want
+        to monetize their content to corporates looking for a hassle-free solution for
+        company events, we have something for everyone.
+      </p>
+      <div class="cards-container">
+        <div class="card">
+          <img src="./images/list-your-event-landing-page/venues.png" alt="Venues and Event Organisers">
+          <div class="card-text">VENUES AND EVENT ORGANISERS</div>
+        </div>
+        <div class="card">
+          <img src="./images/list-your-event-landing-page/artists.png" alt="Artists and Creators">
+          <div class="card-text">ARTISTS AND CREATORS</div>
+        </div>
+        <div class="card">
+          <img src="./images/list-your-event-landing-page/courses.png" alt="Course and Workshop Facilitators">
+          <div class="card-text">COURSE AND WORKSHOP FACILITATORS</div>
+        </div>
+        <div class="card">
+          <img src="./images/list-your-event-landing-page/travels.png" alt="Travel Organizers">
+          <div class="card-text">TRAVEL ORGANIZERS</div>
+        </div>
+        <div class="card">
+          <img src="./images/list-your-event-landing-page/corporates.png" alt="Corporates">
+          <div class="card-text">CORPORATES</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clients Section -->
+  <section id="clients">
+    <div class="clients-section">
+
+        <h2>Our Clients</h2>
+        <p class="clients-desc">Trusted by Canadians</p>
+        <div class="clients">
+            <img src="./images/list-your-event-landing-page/oml.jpg" alt="OML" class="client-logo">
+            <img src="./images/list-your-event-landing-page/Kommune.png" alt="Kommune" class="client-logo">
+            <img src="./images/list-your-event-landing-page/qyuki.jpg" alt="Qyuki" class="client-logo">
+            <img src="./images/list-your-event-landing-page/counter-culture.jpg" alt="Counter Culture" class="client-logo">
+            <img src="./images/list-your-event-landing-page/mom.png" alt="Mad Over Marketing" class="client-logo">
+            <img src="./images/list-your-event-landing-page/hunger.png" alt="Hunger Inc." class="client-logo">
+        </div>
+
+    </div>
+  </section>
+
+  </div> <!-- End #content -->
+
+  <!-- Login Popup -->
+  <div id="popup" class="hidden">
+    <button class="close-btn" onclick="closePopup()">✖</button>
+    <h2>Hey Organizer!</h2>
+    <p>Sign in or Sign up with your email &amp; password.</p>
+
+    <!-- Single form with two different buttons for Sign In / Sign Up -->
+    <form id="authForm">
+      <input
+        type="email"
+        id="loginEmail"
+        class="input-field"
+        placeholder="Enter your email address"
+        required
+      />
+      <div class="password-field-container">
+        <input
+          type="password"
+          id="loginPassword"
+          class="input-field"
+          placeholder="Enter your password"
+          required
+        />
+        <button type="button" class="password-toggle-btn" id="passwordToggleBtn">
+          <i class="fas fa-eye" style="color:black"></i>
+        </button>
+      </div>
+      <div style="display: flex; gap: 1rem;">
+        <button type="button" class="btn" id="signInBtn">Sign In</button>
+        <button type="button" class="btn" id="signUpBtn">Sign Up</button>
+      </div>
+      <div style="text-align: center; margin-top: 15px;">
+        <a href="javascript:void(0)" id="forgotPasswordLink" style="color: #007BFF; text-decoration: underline; font-size: 0.95rem; cursor: pointer; display: inline-block; padding: 5px;">Forgot Password?</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Forgot Password Popup -->
+  <div id="forgotPasswordPopup" class="hidden" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; color: #000; padding: 2rem; border-radius: 8px; z-index: 1001; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); min-width: 320px;">
+    <button class="close-btn" onclick="closeForgotPasswordForm()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 1.2rem; cursor: pointer;">✖</button>
+    <h2 style="margin-top: 10px; color: #333; font-size: 1.5rem;">Reset Password</h2>
+    <p style="margin-bottom: 20px; color: #666;">Enter your email address and we'll send you a link to reset your password.</p>
+    <form id="resetPasswordForm">
+      <input type="email" id="resetEmail" class="input-field" placeholder="Enter your email address" required style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;" />
+      <button type="button" onclick="sendResetPasswordEmail()" style="width: 100%; padding: 12px; background: #007BFF; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; font-weight: bold;">Send Reset Link</button>
+    </form>
+  </div>
+
+  <script>
+    // Initialize password toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const passwordInput = document.getElementById('loginPassword');
+      const toggleButton = document.getElementById('passwordToggleBtn');
+      
+      // Add smooth scrolling for navigation links
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+          // Only handle same-page links
+          if (this.getAttribute('href').startsWith('#')) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            
+            if (targetElement) {
+              targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+                inline: 'nearest'
+              });
+              
+              // Add class for transition
+              document.documentElement.classList.add('smooth-scroll');
+              
+              // Remove class after animation
+              setTimeout(() => {
+                document.documentElement.classList.remove('smooth-scroll');
+              }, 1500); // Match this with the CSS scroll duration
+            }
+          }
+        });
+      });
+      
+      if (toggleButton) {
+        toggleButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          const icon = this.querySelector('i');
+          
+          if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+          } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+          }
+        });
+      }
+    });
+
+    function toggle() {
+      const content = document.getElementById('content');
+      const popup = document.getElementById('popup');
+      content.classList.toggle('active');
+      popup.classList.toggle('hidden');
+    }
+
+    function closePopup() {
+      const content = document.getElementById('content');
+      const popup = document.getElementById('popup');
+      content.classList.remove('active');
+      popup.classList.add('hidden');
+    }
+    
+    function openForgotPasswordForm() {
+      document.getElementById('popup').classList.add('hidden');
+      document.getElementById('forgotPasswordPopup').classList.remove('hidden');
+    }
+    
+    function closeForgotPasswordForm() {
+      document.getElementById('forgotPasswordPopup').classList.add('hidden');
+      document.getElementById('popup').classList.remove('hidden');
+    }
+    
+    function sendResetPasswordEmail() {
+      const email = document.getElementById('resetEmail').value;
+      if (!email) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Email Required',
+          text: 'Please enter your email address.'
+        });
+        return;
+      }
+      
+      // Use a global import to access the resetPassword function
+      import('./firebase.js').then(module => {
+        module.resetPassword(email).then(result => {
+          if (result.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Reset Link Sent',
+              text: 'Please check your email for password reset instructions.'
+            });
+            closeForgotPasswordForm();
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: result.message
+            });
+          }
+        }).catch(error => {
+          console.error('Error sending reset email:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to send reset link. Please try again.'
+          });
+        });
+      }).catch(error => {
+        console.error('Error importing firebase module:', error);
+      });
+    }
+  </script>
+
+  <!-- Optionally load app.js if you want to load events or footers on this page -->
+  <script type="module" src="app.js"></script>
+  <script>
+    // Function to show error for incorrect credentials
+    function showIncorrectCredentials() {
+      Swal.fire({
+        icon: 'error',
+        title: 'Incorrect Credentials',
+        text: 'The username or password you entered is incorrect. Please try again.',
+        confirmButtonText: 'Try Again'
+      });
+    }
+
+    // Function to show error when account already exists
+    function showAccountExists() {
+      Swal.fire({
+        icon: 'error',
+        title: 'Account Already Exists',
+        text: 'An account with this email already exists. Please log in or reset your password.',
+        confirmButtonText: 'OK'
+      });
+    }
+  </script>
+</body>
+</html>

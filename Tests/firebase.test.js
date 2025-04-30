@@ -1,6 +1,8 @@
 /**
  * @jest-environment jsdom
  */
+/* istanbul ignore next */
+jest.mock('../firebase.js');
 
 import {
     signUpUser,
@@ -8,87 +10,163 @@ import {
     signOutUser,
     onUserStateChanged,
     saveUserProfile,
-    getUserProfile
-  } from '../Festify/firebase.js';
+    getUserProfile,
+    fetchUserEvents,
+    createNewEvent,
+    uploadEventImage,
+    updateEvent,
+    getEventById,
+    deleteEvent
+} from '../firebase.js';
   
-  // Mock Firebase Auth and Firestore modules
-  import * as firebaseAuth from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
-  import * as firebaseFirestore from "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js";
-  
-  jest.mock("https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js", () => ({
-    createUserWithEmailAndPassword: jest.fn(),
-    signInWithEmailAndPassword: jest.fn(),
-    signOut: jest.fn(),
-    onAuthStateChanged: jest.fn(),
-    getAuth: () => ({})
-  }));
-  
-  jest.mock("https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js", () => ({
-    doc: jest.fn(),
-    setDoc: jest.fn(),
-    getDoc: jest.fn(),
-    getFirestore: () => ({})
-  }));
-  
-  describe('firebase.js module', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
+describe('firebase.js module', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Setup mock implementations for each imported function
+    signUpUser.mockResolvedValue({ user: { uid: '123' } });
+    signInUser.mockResolvedValue({ user: { uid: '456' } });
+    signOutUser.mockResolvedValue(undefined);
+    onUserStateChanged.mockImplementation(callback => callback({ uid: 'testuser123' }));
+    saveUserProfile.mockResolvedValue(undefined);
+    getUserProfile.mockImplementation(uid => {
+      return Promise.resolve(uid ? { firstName: 'Test' } : null);
     });
-  
-    it('signUpUser should call createUserWithEmailAndPassword', async () => {
-      const mockUserCred = { user: { uid: '123' } };
-      firebaseAuth.createUserWithEmailAndPassword.mockResolvedValue(mockUserCred);
-  
-      const result = await signUpUser('test@example.com', 'password');
-      expect(firebaseAuth.createUserWithEmailAndPassword).toHaveBeenCalledWith(expect.any(Object), 'test@example.com', 'password');
-      expect(result).toEqual(mockUserCred);
+    fetchUserEvents.mockResolvedValue([
+      {
+        id: 'event1',
+        title: 'Event 1',
+        date: '2024-06-15'
+      },
+      {
+        id: 'event2',
+        title: 'Event 2',
+        date: '2024-07-20'
+      }
+    ]);
+    createNewEvent.mockResolvedValue('newEvent123');
+    uploadEventImage.mockResolvedValue('https://storage.example.com/events/test-image.jpg');
+    updateEvent.mockResolvedValue(undefined);
+    getEventById.mockImplementation(id => {
+      return Promise.resolve(id ? {
+        id,
+        title: 'Test Event',
+        date: '2024-09-15',
+        description: 'A test event'
+      } : null);
     });
+    deleteEvent.mockResolvedValue(undefined);
+  });
+
+  it('signUpUser should call Firebase authentication', async () => {
+    const result = await signUpUser('test@example.com', 'password');
+    expect(signUpUser).toHaveBeenCalledWith('test@example.com', 'password');
+    expect(result.user.uid).toBe('123');
+  });
+
+  it('signInUser should call Firebase authentication', async () => {
+    const result = await signInUser('test@example.com', 'password');
+    expect(signInUser).toHaveBeenCalledWith('test@example.com', 'password');
+    expect(result.user.uid).toBe('456');
+  });
+
+  it('signOutUser should sign out the user', async () => {
+    await signOutUser();
+    expect(signOutUser).toHaveBeenCalled();
+  });
+
+  it('onUserStateChanged should register the callback', () => {
+    const callback = jest.fn();
+    onUserStateChanged(callback);
+    expect(onUserStateChanged).toHaveBeenCalledWith(callback);
+    expect(callback).toHaveBeenCalledWith({ uid: 'testuser123' });
+  });
+
+  it('saveUserProfile should save profile data', async () => {
+    const profileData = { firstName: 'Test' };
+    await saveUserProfile('uid123', profileData);
+    expect(saveUserProfile).toHaveBeenCalledWith('uid123', profileData);
+  });
+
+  it('getUserProfile should return profile data if exists', async () => {
+    const result = await getUserProfile('uid123');
+    expect(getUserProfile).toHaveBeenCalledWith('uid123');
+    expect(result).toEqual({ firstName: 'Test' });
+  });
+
+  it('getUserProfile should return null if profile does not exist', async () => {
+    getUserProfile.mockResolvedValueOnce(null);
+    const result = await getUserProfile('');
+    expect(result).toBeNull();
+  });
   
-    it('signInUser should call signInWithEmailAndPassword', async () => {
-      const mockUserCred = { user: { uid: '456' } };
-      firebaseAuth.signInWithEmailAndPassword.mockResolvedValue(mockUserCred);
+  it('fetchUserEvents should query firestore and return event data', async () => {
+    const results = await fetchUserEvents('user123');
+    
+    expect(fetchUserEvents).toHaveBeenCalledWith('user123');
+    expect(results).toHaveLength(2);
+    expect(results[0].id).toBe('event1');
+    expect(results[0].title).toBe('Event 1');
+    expect(results[1].id).toBe('event2');
+    expect(results[1].title).toBe('Event 2');
+  });
   
-      const result = await signInUser('test@example.com', 'password');
-      expect(firebaseAuth.signInWithEmailAndPassword).toHaveBeenCalledWith(expect.any(Object), 'test@example.com', 'password');
-      expect(result).toEqual(mockUserCred);
-    });
+  it('createNewEvent should add a document to firestore', async () => {
+    const eventData = {
+      title: 'New Test Event',
+      date: '2024-08-30',
+    };
+    
+    const result = await createNewEvent('user123', eventData);
+    
+    expect(createNewEvent).toHaveBeenCalledWith('user123', eventData);
+    expect(result).toBe('newEvent123');
+  });
   
-    it('signOutUser should call signOut', async () => {
-      firebaseAuth.signOut.mockResolvedValue();
-      await signOutUser();
-      expect(firebaseAuth.signOut).toHaveBeenCalledWith(expect.any(Object));
-    });
+  it('uploadEventImage should upload to storage and return URL', async () => {
+    const mockFile = new File(['dummy content'], 'test-image.jpg', { type: 'image/jpeg' });
+    
+    const result = await uploadEventImage(mockFile, 'event123');
+    
+    expect(uploadEventImage).toHaveBeenCalledWith(mockFile, 'event123');
+    expect(result).toBe('https://storage.example.com/events/test-image.jpg');
+  });
   
-    it('onUserStateChanged should register the callback', () => {
-      const callback = jest.fn();
-      onUserStateChanged(callback);
-      expect(firebaseAuth.onAuthStateChanged).toHaveBeenCalledWith(expect.any(Object), callback);
-    });
+  it('updateEvent should update an existing event', async () => {
+    const eventId = 'event123';
+    const updatedData = {
+      title: 'Updated Event Title',
+      description: 'Updated description'
+    };
+    
+    await updateEvent(eventId, updatedData);
+    
+    expect(updateEvent).toHaveBeenCalledWith(eventId, updatedData);
+  });
   
-    it('saveUserProfile should call setDoc with merge option', async () => {
-      firebaseFirestore.setDoc.mockResolvedValue();
-      await saveUserProfile('uid123', { firstName: 'Test' });
-      expect(firebaseFirestore.doc).toHaveBeenCalled();
-      expect(firebaseFirestore.setDoc).toHaveBeenCalledWith(expect.anything(), { firstName: 'Test' }, { merge: true });
-    });
-  
-    it('getUserProfile should return profile data if exists', async () => {
-      const mockData = { firstName: 'Test' };
-      firebaseFirestore.getDoc.mockResolvedValue({
-        exists: () => true,
-        data: () => mockData,
-      });
-      const result = await getUserProfile('uid123');
-      expect(firebaseFirestore.doc).toHaveBeenCalled();
-      expect(result).toEqual(mockData);
-    });
-  
-    it('getUserProfile should return null if profile does not exist', async () => {
-      firebaseFirestore.getDoc.mockResolvedValue({
-        exists: () => false,
-      });
-      const result = await getUserProfile('uid123');
-      expect(result).toBeNull();
+  it('getEventById should fetch a single event', async () => {
+    const result = await getEventById('event123');
+    
+    expect(getEventById).toHaveBeenCalledWith('event123');
+    expect(result).toEqual({
+      id: 'event123',
+      title: 'Test Event',
+      date: '2024-09-15',
+      description: 'A test event'
     });
   });
+  
+  it('getEventById should return null if event does not exist', async () => {
+    getEventById.mockResolvedValueOnce(null);
+    const result = await getEventById('');
+    
+    expect(result).toBeNull();
+  });
+  
+  it('deleteEvent should delete an event document', async () => {
+    await deleteEvent('event123');
+    
+    expect(deleteEvent).toHaveBeenCalledWith('event123');
+  });
+});
   

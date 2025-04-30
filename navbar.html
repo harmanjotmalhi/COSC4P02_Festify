@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="navbar.css">
+    <script>
+        // Toggle mobile menu
+        document.addEventListener('DOMContentLoaded', function() {
+            const hamburger = document.querySelector('.hamburger-menu');
+            const navLinks = document.getElementById('mobileNavLinks');
+            const navActions = document.getElementById('mobileNavActions');
+            
+            if (hamburger) {
+                hamburger.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    
+                    // Only toggle navLinks if it has children
+                    if (navLinks && navLinks.children.length > 0) {
+                        navLinks.classList.toggle('active');
+                    }
+                    
+                    if (navActions) {
+                        navActions.classList.toggle('active');
+                    }
+                });
+            }
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (hamburger && navLinks && navActions) {
+                    const isClickInside = navLinks.contains(event.target) || 
+                                        navActions.contains(event.target) || 
+                                        hamburger.contains(event.target);
+                                        
+                    if (!isClickInside && navActions.classList.contains('active')) {
+                        hamburger.classList.remove('active');
+                        navLinks.classList.remove('active');
+                        navActions.classList.remove('active');
+                    }
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="top-nav-container">
+            <a href="javascript:location.reload();" class="logo">
+                <img src="images/festifyLogo.png" alt="Festify" />
+            </a>
+            <div class="hamburger-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="nav-links" id="mobileNavLinks">
+                <!-- Empty in desktop view, will be used for additional links in the future -->
+            </div>
+            <div class="nav-actions" id="mobileNavActions">
+                <a href="index.html" class="nav-item">Find an Event</a>
+                <a href="list-your-event.html" class="nav-item">List your Event</a>
+                <button class="icon-button" onclick="toggle()">
+                    <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="20" 
+                        height="20" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        stroke-width="2" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round"
+                    >
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+</body>
+</html>

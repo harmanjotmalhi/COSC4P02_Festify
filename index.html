@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Festify - Turn your event into a festival. Discover, create, and manage incredible events across Canada." />
+  <title>Festify - Discover Amazing Events</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- EmailJS Library -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script type="text/javascript">
+    (function() {
+      emailjs.init({
+        publicKey: "LKnJvFcvSslYggCly",
+      });
+    })();
+  </script>
+
+  <!-- Main Stylesheet -->  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- QR Code Generator Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+
+  <!-- Firebase Module -->
+  <script type="module" src="firebase.js"></script>
+
+  <!-- API Keys Initialization -->
+  <script type="module">
+    import { storeApiKeys, fetchApiKeys } from './firebase.js';
+    
+    // Initialize API keys in Firebase and fetch them
+    async function initApiKeys() {
+      try {
+        // Fetch API keys from Firebase (this will store them if they don't exist)
+        const apiKeys = await fetchApiKeys();
+        console.log("API keys initialized successfully");
+        
+        // Initialize EmailJS with the fetched public key
+        emailjs.init({
+          publicKey: apiKeys.EMAIL_PUBLIC_KEY,
+        });
+      } catch (error) {
+        console.error("Error initializing API keys:", error);
+      }
+    }
+    
+    // Call the initialization function
+    document.addEventListener('DOMContentLoaded', initApiKeys);
+  </script>
+
+  <!-- Authentication Logic -->
+  <script type="module">
+    import { signInUser, signUpUser, onUserStateChanged, resetPassword } from './firebase.js';
+
+    // Listen for authentication state changes
+    onUserStateChanged((user) => {
+      if (user) {
+        console.log('User is logged in:', user.email);
+      } else {
+        console.log('No user is logged in.');
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const authForm = document.getElementById('authForm');
+      const signInBtn = document.getElementById('signInBtn');
+      const signUpBtn = document.getElementById('signUpBtn');
+
+      if (authForm && signInBtn && signUpBtn) {
+        // Handle Sign In
+        signInBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const email = document.getElementById('loginEmail').value;
+          const password = document.getElementById('loginPassword').value;
+          try {
+            await signInUser(email, password);
+            window.location.href = 'profile.html';
+          } catch (error) {
+            console.error('Sign In Error:', error);
+            showIncorrectCredentials('Sign In Error: ' + error.message);
+          }
+        });
+
+        // Handle Sign Up
+        signUpBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const email = document.getElementById('loginEmail').value;
+          const password = document.getElementById('loginPassword').value;
+          try {
+            await signUpUser(email, password);
+            Swal.fire({
+              icon: 'success',
+              title: 'Account Created!',
+              text: 'Your account has been successfully created.',
+              confirmButtonText: 'Continue'
+            }).then(() => {
+              window.location.href = 'profile.html';
+            });
+          } catch (error) {
+            console.error('Sign Up Error:', error);
+            showAccountExists('Sign Up Error: ' + error.message);
+          }
+        });
+      }
+    });
+  </script>
+</head>
+<body>
+  <!-- Main Content Wrapper -->
+  <div id="content">
+    <!-- Navigation Bar -->
+    <div id="navbar"></div>
+    <script>
+      fetch('navbar.html')
+        .then(response => response.text())
+        .then(data => { document.getElementById('navbar').innerHTML = data; })
+        .catch(error => console.error('Error loading navbar:', error));
+    </script>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-container">
+        <h1>Discover Amazing Events</h1>
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="Search events..." class="search-input" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Events Grid -->
+    <section class="events-section">
+      <div class="container">
+        <div class="promo-slider">
+          <div class="promo-header">
+            <h3>🎉 Special Promo Codes</h3>
+            <p>Use these codes at checkout for amazing discounts!</p>
+            <button class="promo-close-btn" onclick="closePromoSlider(this)">✖</button>
+          </div>
+          <div class="promo-slides">
+            <div class="promo-slide">
+              <div class="promo-content">
+                <span class="promo-code">WELCOME20</span>
+                <span class="promo-desc">20% off first purchase</span>
+                <span class="promo-valid">Valid until Dec 31, 2025</span>
+              </div>
+            </div>
+            <div class="promo-slide">
+              <div class="promo-content">
+                <span class="promo-code">FESTIVAL15</span>
+                <span class="promo-desc">15% off festival tickets</span>
+                <span class="promo-valid">Valid until Dec 31, 2025</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="events-grid" id="eventsGrid">
+          <!-- Event cards will be injected here by app.js -->
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="app.js"></script>
+
+  <!-- Initialize hamburger menu after navbar is loaded -->
+  <script>
+    // Function to initialize hamburger menu
+    function initializeHamburgerMenu() {
+      const hamburger = document.querySelector('.hamburger-menu');
+      const navLinks = document.getElementById('mobileNavLinks');
+      const navActions = document.getElementById('mobileNavActions');
+      
+      if (hamburger && navLinks && navActions) {
+        hamburger.addEventListener('click', function() {
+          this.classList.toggle('active');
+          
+          // Only toggle navLinks if it has children
+          if (navLinks.children.length > 0) {
+            navLinks.classList.toggle('active');
+          }
+          
+          navActions.classList.toggle('active');
+        });
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+          const isClickInside = navLinks.contains(event.target) || 
+                              navActions.contains(event.target) || 
+                              hamburger.contains(event.target);
+                              
+          if (!isClickInside && navActions.classList.contains('active')) {
+            hamburger.classList.remove('active');
+            navLinks.classList.remove('active');
+            navActions.classList.remove('active');
+          }
+        });
+      }
+    }
+    
+    // Initialize the hamburger menu after navbar is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Wait for navbar to be loaded from navbar.html
+      setTimeout(initializeHamburgerMenu, 500);
+    });
+
+    // Function to close the promo slider
+    function closePromoSlider(button) {
+      const promoSlider = button.closest('.promo-slider');
+      promoSlider.style.display = 'none';
+    }
+  </script>
+
+<!-- Event Details Popup -->
+<div id="eventPopup" class="hidden">
+  <button class="close-btn" onclick="closeEventPopup()">✖</button>
+  <div class="event-popup-content" id="eventPopUp">
+    <input type="hidden" id="eventID" value="">
+    <!-- Slider Container -->
+    <div class="slider" id="slider">
+      <button class="slider-btn prev" onclick="prevSlide()">❮</button>
+      <div class="slides">
+        <img src="" alt="Event Image 1" id="eventImage1" class="slide" />
+        <img src="" alt="Event Image 2" id="eventImage2" class="slide" />
+        <img src="" alt="Event Image 3" id="eventImage3" class="slide" />
+      </div>
+      <button class="slider-btn next" onclick="nextSlide()">❯</button>
+    </div>
+
+    <h2 id="eventTitle"></h2>
+    <div class="event-popup-details">
+      <p id="eventDescription"></p>
+      <div class="event-info-grid">
+        <div class="info-item">
+          <strong>Date:</strong>
+          <span id="eventDate"></span>
+        </div>
+        <div class="info-item">
+          <strong>Time:</strong>
+          <span id="eventTime"></span>
+        </div>
+        <div class="info-item">
+          <strong>Location:</strong>
+          <span id="eventLocation"></span>
+        </div>
+      </div>
+      <div class="ticket-section">
+        <h3>Tickets</h3>
+        <div class="ticket-types">
+          <div class="ticket-type">
+            <label>General Admission</label>
+            <div class="ticket-price" id="generalPrice"></div>
+            <div class="quantity-selector">
+              <button onclick="updateQuantity('general', -1)">-</button>
+              <input type="number" id="generalQuantity" value="0" min="0" readonly />
+              <button onclick="updateQuantity('general', 1)">+</button>
+            </div>
+          </div>
+          <div class="ticket-type" id="seniorTickets" style="display: none;">
+            <label>Senior</label>
+            <div class="ticket-price" id="seniorPrice"></div>
+            <div class="quantity-selector">
+              <button onclick="updateQuantity('senior', -1)">-</button>
+              <input type="number" id="seniorQuantity" value="0" min="0" readonly />
+              <button onclick="updateQuantity('senior', 1)">+</button>
+            </div>
+          </div>
+          <div class="ticket-type" id="childTickets" style="display: none;">
+            <label>Child</label>
+            <div class="ticket-price" id="childPrice"></div>
+            <div class="quantity-selector">
+              <button onclick="updateQuantity('child', -1)">-</button>
+              <input type="number" id="childQuantity" value="0" min="0" readonly />
+              <button onclick="updateQuantity('child', 1)">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="proceed-payment-btn" id="paymentBtn" onclick="showAccessDeniedforTickets('Need to have an account to buy tickets');closeEventPopup();
+              toggle();">Proceed to Payment</button>
+    </div>
+  </div>
+</div>
+
+
+  <!-- Login Popup -->
+  <div id="popup" class="hidden">
+    <button class="close-btn" onclick="closePopup()">✖</button>
+    <h2>Hey There!</h2>
+    <p>Sign in or Sign up with your email &amp; password.</p>
+    <form id="authForm">
+      <input type="email" id="loginEmail" class="input-field" placeholder="Enter your email address" required />
+      <div class="password-field-container">
+        <input type="password" id="loginPassword" class="input-field" placeholder="Enter your password" required />
+        <button type="button" class="password-toggle-btn" id="passwordToggleBtn">
+          <i class="fas fa-eye"></i>
+        </button>
+      </div>
+      <div style="display: flex; gap: 1rem;">
+        <button class="btn" id="signInBtn">Sign In</button>
+        <button class="btn" id="signUpBtn">Sign Up</button>
+      </div>
+      <div style="text-align: center; margin-top: 15px;">
+        <a href="javascript:void(0)" onclick="openForgotPasswordForm()" style="color: #007BFF; text-decoration: underline; font-size: 0.95rem; cursor: pointer; display: inline-block; padding: 5px;">Forgot Password?</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Add password toggle functionality -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const passwordInput = document.getElementById('loginPassword');
+      const toggleButton = document.getElementById('passwordToggleBtn');
+      
+      if (toggleButton) {
+        toggleButton.addEventListener('click', function(e) {
+          e.preventDefault();
+          const icon = this.querySelector('i');
+          
+          if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+          } else {
+            passwordInput.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+          }
+        });
+      }
+    });
+  </script>
+
+  <style>
+    .password-field-container {
+      position: relative;
+      width: 100%;
+      margin: 8px 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .password-toggle-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      color: #666;
+    }
+
+    .password-toggle-btn:hover {
+      color: #333;
+    }
+
+    .password-toggle-btn i {
+      font-size: 16px;
+    }
+
+    .password-field-container .input-field {
+      padding-right: 35px;
+      margin: 0;
+      width: 100%;
+    }
+
+    /* Mobile adjustments */
+    @media screen and (max-width: 480px) {
+      .password-toggle-btn i {
+        font-size: 14px;
+      }
+      
+      .password-field-container .input-field {
+        padding-right: 30px;
+      }
+    }
+
+    /* Extra small screens */
+    @media screen and (max-width: 360px) {
+      .password-toggle-btn i {
+        font-size: 12px;
+      }
+      
+      .password-field-container .input-field {
+        padding-right: 25px;
+      }
+    }
+  </style>
+
+  <!-- Forgot Password Popup -->
+  <div id="forgotPasswordPopup" class="hidden" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; color: #000; padding: 2rem; border-radius: 8px; z-index: 1001; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); min-width: 320px;">
+    <button class="close-btn" onclick="closeForgotPasswordForm()" style="position: absolute; top: 10px; right: 10px; background: none; border: none; font-size: 1.2rem; cursor: pointer;">✖</button>
+    <h2 style="margin-top: 10px; color: #333; font-size: 1.5rem;">Reset Password</h2>
+    <p style="margin-bottom: 20px; color: #666;">Enter your email address and we'll send you a link to reset your password.</p>
+    <form id="resetPasswordForm">
+      <input type="email" id="resetEmail" class="input-field" placeholder="Enter your email address" required style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;" />
+      <button type="button" onclick="sendResetPasswordEmail()" style="width: 100%; padding: 12px; background: #007BFF; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; font-weight: bold;">Send Reset Link</button>
+    </form>
+  </div>
+
+  <!-- Popup Toggle Logic -->
+  <script>
+    function toggle() {
+      const content = document.getElementById('content');
+      const popup = document.getElementById('popup');
+      content.classList.toggle('active');
+      popup.classList.toggle('hidden');
+    }
+    
+    function closePopup() {
+      const content = document.getElementById('content');
+      const popup = document.getElementById('popup');
+      content.classList.remove('active');
+      popup.classList.add('hidden');
+    }
+    
+    function openForgotPasswordForm() {
+      document.getElementById('popup').classList.add('hidden');
+      document.getElementById('forgotPasswordPopup').classList.remove('hidden');
+      console.log('Forgot password form opened');
+    }
+    
+    function closeForgotPasswordForm() {
+      document.getElementById('forgotPasswordPopup').classList.add('hidden');
+      document.getElementById('popup').classList.remove('hidden');
+      console.log('Forgot password form closed');
+    }
+    
+    function sendResetPasswordEmail() {
+      const email = document.getElementById('resetEmail').value;
+      if (!email) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Email Required',
+          text: 'Please enter your email address.'
+        });
+        return;
+      }
+      
+      // Use a global import to access the resetPassword function
+      import('./firebase.js').then(module => {
+        module.resetPassword(email).then(result => {
+          if (result.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Reset Link Sent',
+              text: 'Please check your email for password reset instructions.'
+            });
+            closeForgotPasswordForm();
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: result.message
+            });
+          }
+        }).catch(error => {
+          console.error('Error sending reset email:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to send reset link. Please try again.'
+          });
+        });
+      }).catch(error => {
+        console.error('Error importing firebase module:', error);
+      });
+    }
+  </script>
+
+  <!-- Event Rendering & Popup Interaction -->
+  <script type="module">
+    import './app.js';
+    import { onUserStateChanged, resetPassword } from './firebase.js';
+    
+    window.showEventPopup = showEventPopup;
+
+    window.closeEventPopup = function() {
+      const content = document.getElementById('content');
+      const popup = document.getElementById('eventPopup');
+      content.classList.remove('active');
+      popup.classList.add('hidden');
+      document.body.classList.remove('popup-open');
+    }
+
+    // Make these functions globally available
+    window.showForgotPasswordPopup = function() {
+      document.getElementById('popup').classList.add('hidden');
+      document.getElementById('forgotPasswordPopup').classList.remove('hidden');
+    };
+    
+    window.closeForgotPasswordPopup = function() {
+      document.getElementById('forgotPasswordPopup').classList.add('hidden');
+      document.getElementById('popup').classList.remove('hidden');
+    };
+    
+    // Check if user is logged in to enable payment button
+    document.addEventListener('DOMContentLoaded', () => {
+      const paymentBtn = document.getElementById('paymentBtn');
+      const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+      const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+      
+      // Setup forgot password link
+      if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.showForgotPasswordPopup();
+        });
+      }
+      
+      // Setup reset password button
+      if (resetPasswordBtn) {
+        resetPasswordBtn.addEventListener('click', async () => {
+          const email = document.getElementById('resetEmail').value;
+          if (!email) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Email Required',
+              text: 'Please enter your email address.'
+            });
+            return;
+          }
+          
+          try {
+            const result = await resetPassword(email);
+            if (result.success) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Reset Link Sent',
+                text: 'Please check your email for password reset instructions.'
+              });
+              window.closeForgotPasswordPopup();
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: result.message
+              });
+            }
+          } catch (error) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Failed to send reset link. Please try again.'
+            });
+          }
+        });
+      }
+      
+      onUserStateChanged((user) => {
+        if (paymentBtn) {
+          if (user) {
+            // User is logged in, enable payment button
+            paymentBtn.onclick = checkout;
+            paymentBtn.textContent = 'Proceed to Payment';
+          } else {
+            // User is not logged in, disable payment button
+            paymentBtn.onclick = () => {
+              alert('You need to sign in to purchase tickets');
+              closeEventPopup();
+              toggle(); // Show login popup
+            };
+            paymentBtn.textContent = 'Sign in to Purchase';
+          }
+        }
+      });
+    });
+  </script>
+
+  <!-- Load App Logic -->
+  <script type="module" src="app.js"></script>
+
+  <!-- Search Functionality -->
+  <script>
+    document.getElementById('searchInput').addEventListener('input', function () {
+      const query = this.value.toLowerCase();
+      const events = document.querySelectorAll('.event-card');
+      events.forEach(event => {
+        const title = event.querySelector('.event-title').textContent.toLowerCase();
+        event.style.display = title.includes(query) ? '' : 'none';
+      });
+    });
+  </script>
+<script>
+  // Function to show error for incorrect credentials
+  function showIncorrectCredentials() {
+    Swal.fire({
+      icon: 'error',
+      title: 'Incorrect Credentials',
+      text: 'The username or password you entered is incorrect. Please try again.',
+      confirmButtonText: 'Try Again'
+    });
+  }
+
+  // Function to show error when account already exists
+  function showAccountExists() {
+    Swal.fire({
+      icon: 'error',
+      title: 'Account Already Exists',
+      text: 'An account with this email already exists. Please log in or reset your password.',
+      confirmButtonText: 'OK'
+    });
+  }
+
+  function showAccessDeniedforTickets() {
+    Swal.fire({
+      icon: 'error',
+      title: 'Access Denied',
+      text: 'You need to have an account to buy tickets.',
+      confirmButtonText: 'OK'
+    });
+  }
+</script>
+
+<!-- Add styles and functionality for promo slider close button -->
+<style>
+  .promo-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.2s ease;
+  }
+  
+  .promo-close-btn:hover {
+    color: #fff;
+  }
+  
+  .promo-header {
+    position: relative;
+  }
+</style>
+</body>
+</html>

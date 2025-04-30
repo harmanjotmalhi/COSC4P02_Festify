@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Organizer Dashboard</title>
+  <link rel="stylesheet" href="orgstyles.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <!-- Include dashboard logic -->
+  <script type="module" src="script.js"></script>
+  
+  <!-- Add date and time validation script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Function to create a Date object from date and time strings
+      function createDateTime(dateStr, timeStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return new Date(year, month - 1, day, hours, minutes);
+      }
+
+      // Function to validate time
+      function validateTime(input, dateInput, isStartTime = true, showAlert = true) {
+        const selectedDate = dateInput.value;
+        const selectedTime = input.value;
+        const currentDate = new Date();
+        
+        if (selectedDate && selectedTime) {
+          const selectedDateTime = createDateTime(selectedDate, selectedTime);
+          
+          if (selectedDateTime < currentDate) {
+            // If selected time is in past, set to current time
+            const currentHours = String(currentDate.getHours()).padStart(2, '0');
+            const currentMinutes = String(currentDate.getMinutes()).padStart(2, '0');
+            input.value = `${currentHours}:${currentMinutes}`;
+            
+            if (isStartTime && showAlert) {
+              Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Time',
+                text: 'Start time cannot be in the past. Set to current time.',
+                timer: 2000,
+                showConfirmButton: false
+              });
+            }
+          }
+        }
+      }
+
+      // Function to initialize date and time validation for a form
+      function initializeDateTimeValidation(dateInput, startTimeInput, endTimeInput) {
+        // Set minimum date to today
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const minDate = `${year}-${month}-${day}`;
+        dateInput.min = minDate;
+
+        // Add event listener to date input
+        dateInput.addEventListener('change', function() {
+          const selectedDate = new Date(this.value);
+          const currentDate = new Date();
+          
+          if (selectedDate.toDateString() === currentDate.toDateString()) {
+            const currentHours = String(currentDate.getHours()).padStart(2, '0');
+            const currentMinutes = String(currentDate.getMinutes()).padStart(2, '0');
+            startTimeInput.min = `${currentHours}:${currentMinutes}`;
+            startTimeInput.value = `${currentHours}:${currentMinutes}`;
+          } else {
+            startTimeInput.min = '00:00';
+            startTimeInput.value = '00:00';
+          }
+          endTimeInput.value = ''; // Clear end time when date changes
+        });
+
+        // Add event listeners to time inputs
+        startTimeInput.addEventListener('input', function() {
+          validateTime(this, dateInput, true, false); // Don't show alert on input
+        });
+
+        startTimeInput.addEventListener('change', function() {
+          validateTime(this, dateInput, true, true); // Show alert on change
+          endTimeInput.min = this.value;
+          if (endTimeInput.value && endTimeInput.value <= this.value) {
+            endTimeInput.value = '';
+          }
+        });
+
+        endTimeInput.addEventListener('change', function() {
+          const startTime = startTimeInput.value;
+          const endTime = this.value;
+          
+          if (startTime && endTime) {
+            if (endTime <= startTime) {
+              Swal.fire({
+                icon: 'error',
+                title: 'Invalid Time',
+                text: 'End time must be after start time',
+              });
+              this.value = '';
+            }
+          }
+        });
+
+        // Initial validation
+        if (dateInput.value === minDate) {
+          const currentHours = String(today.getHours()).padStart(2, '0');
+          const currentMinutes = String(today.getMinutes()).padStart(2, '0');
+          startTimeInput.min = `${currentHours}:${currentMinutes}`;
+          startTimeInput.value = `${currentHours}:${currentMinutes}`;
+        }
+      }
+
+      // Initialize validation for create event form
+      const createDateInput = document.getElementById('date');
+      const createStartTimeInput = document.getElementById('start-time');
+      const createEndTimeInput = document.getElementById('end-time');
+      if (createDateInput && createStartTimeInput && createEndTimeInput) {
+        initializeDateTimeValidation(createDateInput, createStartTimeInput, createEndTimeInput);
+      }
+
+      // Initialize validation for edit event form
+      const editDateInput = document.getElementById('editDate');
+      const editStartTimeInput = document.getElementById('editStartTime');
+      const editEndTimeInput = document.getElementById('editEndTime');
+      if (editDateInput && editStartTimeInput && editEndTimeInput) {
+        initializeDateTimeValidation(editDateInput, editStartTimeInput, editEndTimeInput);
+      }
+    });
+  </script>
+  
+  <!-- Google Places API with better error handling -->
+  <script>
+    // Define a global callback that will be called when the API loads
+    window.initGoogleMapsAPI = function() {
+      console.log('Google Maps API loaded successfully');
+      initializeAutocomplete('address');
+      initializeAutocomplete('location');
+      initializeAutocomplete('editLocation');
+    };
+    
+    // Function to load the Google Maps API with proper key
+    async function loadGoogleMapsAPI() {
+      // Check if API is already loaded
+      if (window.google && window.google.maps) {
+        console.log('Google Maps API already loaded');
+        initializeAutocomplete('address');
+        initializeAutocomplete('location');
+        initializeAutocomplete('editLocation');
+        return;
+      }
+      
+      try {
+        // Get Google Maps API key from Firebase via localStorage
+        const googleMapsApiKey = localStorage.getItem('festify_google_maps_api_key') || 'YOUR_FALLBACK_API_KEY';
+        console.log('Using Google Maps API key from storage');
+        
+        // Create the script element
+        const script = document.createElement('script');
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + 
+                    googleMapsApiKey + 
+                    '&libraries=places&callback=initGoogleMapsAPI';
+        script.async = true;
+        script.defer = true;
+        
+        // Add error handling
+        script.onerror = function() {
+          console.error('Failed to load Google Maps API');
+          document.getElementById('address').placeholder = 'Enter your address manually (API failed to load)';
+        };
+        
+        // Append to document
+        document.head.appendChild(script);
+      } catch (error) {
+        console.error('Error loading Google Maps API:', error);
+      }
+    }
+    
+    // Load the API when the document is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Attempt to fetch the API key from Firebase first
+      import('./firebase.js').then(module => {
+        module.getApiKey('GOOGLE_MAPS_API_KEY').then(apiKey => {
+          if (apiKey) {
+            console.log('Successfully got Google Maps API key from Firebase');
+            localStorage.setItem('festify_google_maps_api_key', apiKey);
+          }
+          loadGoogleMapsAPI();
+        }).catch(error => {
+          console.error('Error getting Google Maps API key:', error);
+          loadGoogleMapsAPI();
+        });
+      }).catch(error => {
+        console.error('Error importing Firebase module:', error);
+        loadGoogleMapsAPI();
+      });
+      
+      // Add a focus event listener to ensure API is loaded when the fields are focused
+      const addressFields = ['address', 'location', 'editLocation'];
+      addressFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          field.addEventListener('focus', function() {
+            if (!window.google || !window.google.maps) {
+              console.log('Google Maps API not loaded yet, trying to load on focus');
+              loadGoogleMapsAPI();
+            }
+          });
+        }
+      });
+    });
+    
+    // Initialize autocomplete for address input field
+    function initializeAutocomplete(id) {
+      try {
+        var element = document.getElementById(id);
+        if (!element) {
+          console.error('Element with ID ' + id + ' not found');
+          return;
+        }
+        
+        if (!window.google || !window.google.maps || !window.google.maps.places) {
+          console.error('Google Maps Places API not available');
+          element.placeholder = 'Enter your address manually';
+          return;
+        }
+        
+        console.log('Initializing autocomplete for ' + id);
+        
+        var autocomplete = new google.maps.places.Autocomplete(element, { 
+          types: ['geocode'],
+          componentRestrictions: { country: ['us', 'ca'] } // Restrict to US, Canada - modify as needed
+        });
+        
+        // Add a loading indicator
+        if (!document.getElementById('address-loading')) {
+          element.insertAdjacentHTML('afterend', '<div id="address-loading" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%);"><div class="spinner"></div></div>');
+        }
+        const loadingIndicator = document.getElementById('address-loading');
+        
+        // Show loading indicator when typing
+        element.addEventListener('input', function() {
+          if (this.value.length > 2) {
+            loadingIndicator.style.display = 'block';
+            // Hide after 1 second (typical API response time)
+            setTimeout(() => {
+              loadingIndicator.style.display = 'none';
+            }, 1000);
+          }
+        });
+        
+        // Prevent form submission when pressing enter in the address field
+        element.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && document.querySelector('.pac-container:visible')) {
+            e.preventDefault();
+          }
+        });
+        
+        // Store the autocomplete instance on the element for future reference
+        element.autocomplete = autocomplete;
+        
+        // Add place_changed listener
+        google.maps.event.addListener(autocomplete, 'place_changed', function() {
+          var place = autocomplete.getPlace();
+          
+          if (!place || !place.address_components) {
+            console.log('No valid place selected or missing address components');
+            return;
+          }
+          
+          console.log('Place selected:', place.formatted_address);
+          
+          // Trigger a custom event that other scripts can listen for
+          const event = new CustomEvent('addressSelected', { 
+            detail: { 
+              address: place.formatted_address,
+              components: place.address_components
+            } 
+          });
+          document.dispatchEvent(event);
+        });
+        
+        console.log('Autocomplete initialized successfully for ' + id);
+        return autocomplete;
+      } catch (error) {
+        console.error('Error initializing autocomplete:', error);
+        // Fallback to manual input
+        element.placeholder = 'Enter your address manually';
+      }
+    }
+    
+    // Add this to the document's CSS
+    document.addEventListener('DOMContentLoaded', function() {
+      const style = document.createElement('style');
+      style.textContent = `
+        /* Google Places Autocomplete Styles */
+        .pac-container {
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+          margin-top: 5px;
+          font-family: inherit;
+          border: 1px solid #ddd;
+          z-index: 9999;
+        }
+        
+        .pac-item {
+          padding: 10px;
+          cursor: pointer;
+          transition: background-color 0.2s;
+        }
+        
+        .pac-item:hover {
+          background-color: #f5f5f5;
+        }
+        
+        .pac-item-selected {
+          background-color: #f0f0f0;
+        }
+        
+        .pac-icon {
+          margin-right: 10px;
+        }
+        
+        .pac-item-query {
+          font-size: 14px;
+          color: #333;
+        }
+        
+        /* Style the input field when focused */
+        #address:focus,
+        #location:focus,
+        #editLocation:focus {
+          border-color: #4285f4;
+          box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+          outline: none;
+        }
+        
+        /* Spinner for loading indicator */
+        .spinner {
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(0, 0, 0, 0.1);
+          border-top-color: #4285f4;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `;
+      document.head.appendChild(style);
+    });
+  </script>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <a href="index.html" class="logo">
+          <img src="images/festifyLogo.png" alt="Festify Logo" class="header-logo" />
+        </a>
+        <h1>Organizer Dashboard</h1>
+        <div class="button-group">
+          <!-- The "Edit Profile" button will trigger showing the profile form -->
+          <button class="btn btn-outline">
+            <i class="fas fa-user-circle"></i>
+            Edit Profile
+          </button>
+          <!-- "Create New Event" button -->
+          <button class="btn btn-primary" id="createNewEventBtn">
+            <i class="fas fa-plus-circle"></i>
+            Create New Event
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <!-- Dashboard Metrics Section -->
+      <section class="metrics-section">
+        <h2 class="section-title">
+          <i class="fas fa-chart-line"></i>
+          Dashboard Metrics
+        </h2>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <h3 class="metric-title">Total Events</h3>
+            <p class="metric-value" id="totalEvents">24</p>
+            <div class="metric-trend trend-up">
+              <i class="fas fa-arrow-up"></i>
+            </div>
+          </div>
+          <div class="metric-card">
+            <h3 class="metric-title">Total Revenue</h3>
+            <p class="metric-value" id="totalRevenue"></p>
+            <div class="metric-trend trend-up">
+              <i class="fas fa-arrow-up"></i>
+            </div>
+          </div>
+          <div class="metric-card">
+            <h3 class="metric-title">Active Attendees</h3>
+            <p class="metric-value" id="attendees">1,250</p>
+            <div class="metric-trend trend-up">
+              <i class="fas fa-arrow-up"></i>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Events Section -->
+      <section class="events-section">
+        <h2 class="section-title">
+          <i class="fas fa-calendar-alt"></i>
+          Your Events &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;                         
+          <button type="submit" class="btn btn-primary" id="boostEventBtn">Boost Event</button>
+         
+        </h2>
+        <div class="events-grid" id="eventsGrid">
+          <!-- Event cards will be rendered here by script.js -->
+        </div>
+      </section>
+
+      <!-- Event Form Section (Hidden by default) -->
+      <section class="event-form-section" id="eventFormSection" style="display: none;">
+        <div class="form-container">
+          <h2 class="section-title">
+            <i class="fas fa-calendar-plus"></i>
+            Create New Event
+          </h2>
+          <form id="eventForm">
+            <label for="title">Event Title</label>
+            <input type="text" id="title" placeholder="Event Title" required />
+
+            <label for="description">Event Description</label>
+            <div class="description-container">
+              <textarea id="description" placeholder="Event Description" rows="4" maxlength="300" required></textarea>
+              <button type="button" class="ai-generate-btn" id="generatePosterBtn">
+                <i class="fas fa-magic"></i>
+                Generate Poster ✨
+              </button>
+            </div>
+            <div id="posterGenerationStatus" class="generation-status" style="display: none;">
+              <div class="spinner"></div>
+              <p>Generating your event poster...</p>
+            </div>
+            <div id="generatedPosterPreview" class="generated-poster-preview" style="display: none;">
+              <img id="generatedPosterImage" alt="Generated Event Poster">
+              <div class="poster-actions">
+                <button type="button" class="btn btn-primary" id="useGeneratedPoster">Use This Poster</button>
+                <button type="button" class="btn btn-secondary" id="regeneratePoster">Generate Another</button>
+              </div>
+            </div>
+
+            <div class="form-row" >
+              <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" id="date" required />
+              </div>
+              <div class="form-group">
+                <label for="start-time">Start Time</label>
+                <input type="time" id="start-time" required />
+              </div>
+              <div class="form-group">
+                <label for="end-time">End Time</label>
+                <input type="time" id="end-time" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" id="location" placeholder="Location" required />
+              </div>
+              <div class="form-group">
+                <label for="ticketInput">Number of Tickets</label>
+                <input type="number" id="ticketInput" min="0" max="50000" value="0" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="generalPrice">General Price ($)</label>
+                <input type="number" id="generalPrice" min="0" step="0.01" placeholder="0.00" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group price-option">
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" id="enableChildPrice" />
+                  <label for="enableChildPrice">Add this option: Below 13</label>
+                </div>
+                <input type="number" id="childPrice" min="0" step="0.01" placeholder="0.00" disabled />
+              </div>
+              <div class="form-group price-option">
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" id="enableSeniorPrice" />
+                  <label for="enableSeniorPrice">Add this option: Above 55</label>
+                </div>
+                <input type="number" id="seniorPrice" min="0" step="0.01" placeholder="0.00" disabled />
+              </div>
+            </div>
+
+            <div class="upload-box" id="upload-box1">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click to Upload Files</p>
+            </div>
+            <div class="image-preview-container">
+              <input type="file" id="fileInput1" accept="image/*" multiple style="display: none;" />
+              <img id="preview-selected-image1" style="display:none;">
+            </div>
+
+            <div class="upload-box" id="upload-box2">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click to Upload Files</p>
+            </div>
+            <div class="image-preview-container">
+              <input type="file" id="fileInput2" accept="image/*" multiple style="display: none;" />
+              <img id="preview-selected-image2" style="display:none;">
+            </div>
+
+            <div class="upload-box" id="upload-box3">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click to Upload Files</p>
+            </div>
+            <div class="image-preview-container">
+              <input type="file" id="fileInput3" accept="image/*" multiple style="display: none;" />
+              <img id="preview-selected-image3" style="display:none;">
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="cancel_Create_Event">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="eventSubmitButton">Create Event</button>
+            </div>
+          </form>
+        </div>
+      </section>
+      <style>
+        @media (max-width: 768px) {
+            .form-row {
+                display: flex;
+                flex-direction: column;
+            }
+            .form-group {
+                margin-bottom: 1rem;
+            }
+            #start-time, #end-time {
+                margin-top: 1rem;
+            }
+        }
+    </style>
+
+      <!-- Edit Event Form Section (Hidden by default) -->
+      <section class="event-form-section" id="editEventFormSection" style="display: none;">
+        <div class="form-container">
+          <h2 class="section-title">
+            <i class="fas fa-edit"></i> 
+            Edit Event
+          </h2>
+          
+          <form id="editEventForm">
+            <label for="editTitle">Event Title</label>
+            <input type="text" id="editTitle" placeholder="Event Title" required />
+
+            <label for="editDescription">Event Description</label>
+            <textarea id="editDescription" placeholder="Event Description" rows="4" maxlength="300" required></textarea>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editDate">Date</label>
+                <input type="date" id="editDate" required />
+              </div>
+              <div class="form-group">
+                <label for="editStartTime">Start Time</label>
+                <input type="time" id="editStartTime" required />
+              </div>
+              <div class="form-group">
+                <label for="editEndTime">End Time</label>
+                <input type="time" id="editEndTime" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editLocation">Location</label>
+                <input type="text" id="editLocation" placeholder="Location" required />
+              </div>
+              <div class="form-group">
+                <label for="editTicketInput">Number of Tickets</label>
+                <input type="number" id="editTicketInput" min="0" max="50000" value="0" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="editGeneralPrice">General Price ($)</label>
+                <input type="number" id="editGeneralPrice" min="0" step="0.01" placeholder="0.00" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group price-option">
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" id="editEnableChildPrice" />
+                  <label for="editEnableChildPrice">Add this option: Below 13</label>
+                </div>
+                <input type="number" id="editChildPrice" min="0" step="0.01" placeholder="0.00" disabled />
+              </div>
+              <div class="form-group price-option">
+                <div class="checkbox-wrapper">
+                  <input type="checkbox" id="editEnableSeniorPrice" />
+                  <label for="editEnableSeniorPrice">Add this option: Above 55</label>
+                </div>
+                <input type="number" id="editSeniorPrice" min="0" step="0.01" placeholder="0.00" disabled />
+              </div>
+            </div>
+
+            <div class="upload-box" id="editUpload-box1">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click to Upload Files</p>
+            </div>
+            <div class="image-preview-container">
+              <input type="file" id="editFileInput1" accept="image/*" multiple style="display: none;" />
+              <img id="editPreview-selected-image1" style="display:none;">
+            </div>
+
+            <div class="upload-box" id="editUpload-box2">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click to Upload Files</p>
+            </div>
+            <div class="image-preview-container">
+              <input type="file" id="editFileInput2" accept="image/*" multiple style="display: none;" />
+              <img id="editPreview-selected-image2" style="display:none;">
+            </div>
+
+            <div class="upload-box" id="editUpload-box3">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p>Click to Upload Files</p>
+            </div>
+            <div class="image-preview-container">
+              <input type="file" id="editFileInput3" accept="image/*" multiple style="display: none;" />
+              <img id="editPreview-selected-image3" style="display:none;">
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" class="btn btn-danger" id="delete_Event">Delete Event</button>
+              <button type="button" class="btn btn-secondary" id="cancel_Edit_Event">Cancel</button>
+              <button type="submit" class="btn btn-primary">Update Event</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Profile Form Section (Hidden by default) -->
+      <section class="profile-form-section" id="profileFormSection" style="display: none;">
+        <div class="form-container">
+          <h2 class="section-title">
+            <i class="fas fa-user-edit"></i>
+            Edit Organization Profile
+          </h2>
+          <form id="profileForm">
+            <label for="orgName">Organization Name</label>
+            <input type="text" id="orgName" placeholder="Organization Name" required />
+            <div class="form-row">
+              <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" placeholder="Phone Number" required />
+              </div>
+              <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="Email Address" required />
+              </div>
+            </div>
+            <label for="address">Address</label>
+            <input type="text" id="address" placeholder="Start typing your address to search..." required autocomplete="off" />
+            <label for="website">Website</label>
+            <input type="url" id="website" placeholder="Website URL" />
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="cancel_Profile">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Font Awesome Kit (replace 'your-font-awesome-kit.js' with your actual kit if needed) -->
+  <script src="https://kit.fontawesome.com/62b3b70e61.js" crossorigin="anonymous"></script>
+</body>
+</html>

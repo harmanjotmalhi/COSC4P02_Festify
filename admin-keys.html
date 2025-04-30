@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Festify Admin - API Keys Management</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Firebase Module -->
+  <script type="module" src="firebase.js"></script>
+  
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 30px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+    
+    .api-key-form {
+      margin-bottom: 40px;
+    }
+    
+    .input-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background-color 0.3s;
+    }
+    
+    .btn-primary {
+      background-color: #4285f4;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: #3367d6;
+    }
+    
+    .btn-secondary {
+      background-color: #f1f1f1;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e1e1e1;
+    }
+    
+    .key-display {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    
+    .key-item {
+      margin-bottom: 15px;
+      word-break: break-all;
+    }
+    
+    .key-name {
+      font-weight: bold;
+      display: inline-block;
+      width: 200px;
+    }
+    
+    .status-message {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    
+    .status-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .login-required {
+      text-align: center;
+      padding: 40px;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+        margin: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>API Keys Management</h1>
+    
+    <div id="loginSection" class="login-required">
+      <p>Please sign in as an administrator to manage API keys</p>
+      <div class="input-group">
+        <label for="adminEmail">Email:</label>
+        <input type="email" id="adminEmail" placeholder="Admin Email">
+      </div>
+      <div class="input-group">
+        <label for="adminPassword">Password:</label>
+        <input type="password" id="adminPassword" placeholder="Admin Password">
+      </div>
+      <button id="adminLoginBtn" class="btn-primary">Sign In</button>
+    </div>
+    
+    <div id="keysSection" style="display: none;">
+      <div class="api-key-form">
+        <div class="input-group">
+          <label for="firebaseApiKey">Firebase API Key:</label>
+          <input type="text" id="firebaseApiKey" placeholder="Enter Firebase API Key">
+        </div>
+        
+        <div class="input-group">
+          <label for="emailServiceId">Email Service ID:</label>
+          <input type="text" id="emailServiceId" placeholder="Enter Email Service ID">
+        </div>
+        
+        <div class="input-group">
+          <label for="emailPublicKey">Email Public Key:</label>
+          <input type="text" id="emailPublicKey" placeholder="Enter Email Public Key">
+        </div>
+        
+        <div class="input-group">
+          <label for="openaiApiKey">OpenAI API Key:</label>
+          <input type="text" id="openaiApiKey" placeholder="Enter OpenAI API Key">
+        </div>
+        
+        <div class="input-group">
+          <label for="googleMapsApiKey">Google Maps API Key:</label>
+          <input type="text" id="googleMapsApiKey" placeholder="Enter Google Maps API Key">
+        </div>
+        
+        <div class="button-group">
+          <button id="saveKeysBtn" class="btn-primary">Save Keys to Firebase</button>
+          <button id="loadKeysBtn" class="btn-secondary">Load Keys from Firebase</button>
+        </div>
+      </div>
+      
+      <div id="statusMessage" style="display: none;"></div>
+      
+      <div id="keyDisplay" class="key-display" style="display: none;">
+        <h3>Current API Keys in Firebase:</h3>
+        <div id="keysContent"></div>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module">
+    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+    import { storeApiKeys, fetchApiKeys, getAuth } from './firebase.js';
+    
+    const auth = getAuth();
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      const adminLoginBtn = document.getElementById('adminLoginBtn');
+      const saveKeysBtn = document.getElementById('saveKeysBtn');
+      const loadKeysBtn = document.getElementById('loadKeysBtn');
+      
+      // Admin login
+      adminLoginBtn.addEventListener('click', async () => {
+        const email = document.getElementById('adminEmail').value;
+        const password = document.getElementById('adminPassword').value;
+        
+        if (!email || !password) {
+          showStatusMessage('Please enter email and password', 'error');
+          return;
+        }
+        
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          document.getElementById('loginSection').style.display = 'none';
+          document.getElementById('keysSection').style.display = 'block';
+          Swal.fire({
+            icon: 'success',
+            title: 'Login Successful',
+            text: 'You can now manage API keys'
+          });
+          
+          // Load the keys automatically after login
+          loadKeysFromFirebase();
+        } catch (error) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Login Failed',
+            text: error.message
+          });
+        }
+      });
+      
+      // Save keys to Firebase
+      saveKeysBtn.addEventListener('click', async () => {
+        const firebaseApiKey = document.getElementById('firebaseApiKey').value;
+        const emailServiceId = document.getElementById('emailServiceId').value;
+        const emailPublicKey = document.getElementById('emailPublicKey').value;
+        const openaiApiKey = document.getElementById('openaiApiKey').value;
+        const googleMapsApiKey = document.getElementById('googleMapsApiKey').value;
+        
+        if (!firebaseApiKey || !emailServiceId || !emailPublicKey || !openaiApiKey || !googleMapsApiKey) {
+          showStatusMessage('Please fill in all API keys', 'error');
+          return;
+        }
+        
+        try {
+          // Create an object with all the API keys
+          const apiKeys = {
+            FIREBASE_API_KEY: firebaseApiKey,
+            EMAIL_SERVICE_ID: emailServiceId,
+            EMAIL_PUBLIC_KEY: emailPublicKey,
+            OPENAI_API_KEY: openaiApiKey,
+            GOOGLE_MAPS_API_KEY: googleMapsApiKey,
+          };
+          
+          // Call the function to store the keys in Firebase
+          const success = await storeCustomApiKeys(apiKeys);
+          
+          if (success) {
+            showStatusMessage('API keys saved successfully to Firebase', 'success');
+            // Reload the keys to display the updated values
+            loadKeysFromFirebase();
+          } else {
+            showStatusMessage('Failed to save API keys to Firebase', 'error');
+          }
+        } catch (error) {
+          console.error('Error saving API keys:', error);
+          showStatusMessage(`Error: ${error.message}`, 'error');
+        }
+      });
+      
+      // Load keys from Firebase
+      loadKeysBtn.addEventListener('click', loadKeysFromFirebase);
+      
+      // Function to load keys from Firebase
+      async function loadKeysFromFirebase() {
+        try {
+          const apiKeys = await fetchApiKeys();
+          
+          if (apiKeys) {
+            // Fill in the input fields
+            document.getElementById('firebaseApiKey').value = apiKeys.FIREBASE_API_KEY || '';
+            document.getElementById('emailServiceId').value = apiKeys.EMAIL_SERVICE_ID || '';
+            document.getElementById('emailPublicKey').value = apiKeys.EMAIL_PUBLIC_KEY || '';
+            document.getElementById('openaiApiKey').value = apiKeys.OPENAI_API_KEY || '';
+            document.getElementById('googleMapsApiKey').value = apiKeys.GOOGLE_MAPS_API_KEY || '';
+            
+            // Display the keys
+            displayApiKeys(apiKeys);
+            
+            showStatusMessage('API keys loaded successfully from Firebase', 'success');
+          } else {
+            showStatusMessage('No API keys found in Firebase', 'error');
+          }
+        } catch (error) {
+          console.error('Error loading API keys:', error);
+          showStatusMessage(`Error: ${error.message}`, 'error');
+        }
+      }
+      
+      // Function to display API keys
+      function displayApiKeys(apiKeys) {
+        const keyDisplay = document.getElementById('keyDisplay');
+        const keysContent = document.getElementById('keysContent');
+        
+        keysContent.innerHTML = '';
+        
+        for (const [key, value] of Object.entries(apiKeys)) {
+          if (key !== 'updatedAt') {
+            const keyItem = document.createElement('div');
+            keyItem.className = 'key-item';
+            
+            const keyName = document.createElement('span');
+            keyName.className = 'key-name';
+            keyName.textContent = key + ': ';
+            
+            // Mask sensitive key values
+            const keyValue = document.createElement('span');
+            if (typeof value === 'string' && value.length > 8) {
+              keyValue.textContent = value.substring(0, 4) + '...' + value.substring(value.length - 4);
+            } else {
+              keyValue.textContent = value;
+            }
+            
+            keyItem.appendChild(keyName);
+            keyItem.appendChild(keyValue);
+            keysContent.appendChild(keyItem);
+          }
+        }
+        
+        keyDisplay.style.display = 'block';
+      }
+      
+      // Function to show status messages
+      function showStatusMessage(message, type) {
+        const statusMessage = document.getElementById('statusMessage');
+        statusMessage.textContent = message;
+        statusMessage.className = `status-message status-${type}`;
+        statusMessage.style.display = 'block';
+        
+        // Hide the message after 5 seconds
+        setTimeout(() => {
+          statusMessage.style.display = 'none';
+        }, 5000);
+      }
+      
+      // Function to store custom API keys
+      async function storeCustomApiKeys(apiKeys) {
+        try {
+          // Get a reference to the Firebase API
+          const docRef = await storeApiKeys(apiKeys);
+          return true;
+        } catch (error) {
+          console.error('Error storing custom API keys:', error);
+          return false;
+        }
+      }
+    });
+  </script>
+</body>
+</html> 

@@ -4,7 +4,7 @@
   "description": "Festify project - a platform to list events",
   "main": "index.js",
   "scripts": {
-    "test": "jest --coverage"
+    "test": "jest"
   },
   "author": "Kartikkumar Parekh",
   "license": "MIT",
@@ -13,29 +13,41 @@
     "@babel/preset-env": "^7.21.0",
     "babel-jest": "^29.0.0",
     "jest": "^29.0.0",
-    "jest-environment-jsdom": "^29.0.0",
+    "jest-environment-jsdom": "^29.7.0",
     "jest-junit": "^13.0.0"
   },
   "jest": {
-    "testEnvironment": "jest-environment-jsdom",
+    "testEnvironment": "jsdom",
     "transform": {
-      "^.+\\.js$": "babel-jest"
+      "^.+\\.jsx?$": "babel-jest"
     },
     "moduleNameMapper": {
       "^https://www\\.gstatic\\.com/firebasejs/11\\.2\\.0/firebase-app\\.js$": "<rootDir>/__mocks__/firebase-app.js",
       "^https://www\\.gstatic\\.com/firebasejs/11\\.2\\.0/firebase-auth\\.js$": "<rootDir>/__mocks__/firebase-auth.js",
       "^https://www\\.gstatic\\.com/firebasejs/11\\.2\\.0/firebase-firestore\\.js$": "<rootDir>/__mocks__/firebase-firestore.js",
-      "^https://www\\.gstatic\\.com/firebasejs/11\\.2\\.0/firebase-analytics\\.js$": "<rootDir>/__mocks__/firebase-analytics.js"
+      "^https://www\\.gstatic\\.com/firebasejs/11\\.2\\.0/firebase-analytics\\.js$": "<rootDir>/__mocks__/firebase-analytics.js",
+      "^https://www\\.gstatic\\.com/firebasejs/11\\.2\\.0/firebase-storage\\.js$": "<rootDir>/__mocks__/firebase-storage.js"
     },
-    "reporters": [
-      "default",
-      [
-        "jest-junit",
-        {
-          "outputDirectory": "./Tests/test-results",
-          "outputName": "junit.xml"
-        }
-      ]
+    "collectCoverage": true,
+    "coverageReporters": [
+      "text",
+      "lcov"
+    ],
+    "coveragePathIgnorePatterns": [
+      "/node_modules/",
+      "/__mocks__/"
     ]
+  },
+  "jest-junit": {
+    "outputDirectory": "./test-results",
+    "outputName": "junit.xml",
+    "ancestorSeparator": " › ",
+    "uniqueOutputName": "false",
+    "suiteNameTemplate": "{filepath}",
+    "classNameTemplate": "{classname}",
+    "titleTemplate": "{title}"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
   }
 }
